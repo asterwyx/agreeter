@@ -120,13 +120,12 @@ impl CompositorHandler for State {
 
     fn frame(
         &mut self,
-        _conn: &Connection,
-        _qh: &QueueHandle<Self>,
+        conn: &Connection,
+        qh: &QueueHandle<Self>,
         _surface: &wl_surface::WlSurface,
         _time: u32,
     ) {
-        println!("Frame event: {:?}", _time);
-        self.draw(_conn, _qh);
+        self.draw(conn, qh);
     }
     fn surface_enter(
         &mut self,
@@ -156,7 +155,6 @@ impl OutputHandler for State {
         _qh: &QueueHandle<Self>,
         _output: wl_output::WlOutput,
     ) {
-        println!("New output added: {:?}", _output);
     }
 
     fn update_output(
@@ -165,7 +163,6 @@ impl OutputHandler for State {
         _qh: &QueueHandle<Self>,
         _output: wl_output::WlOutput,
     ) {
-        println!("Output updated: {:?}", _output);
     }
 
     fn output_destroyed(
@@ -174,7 +171,6 @@ impl OutputHandler for State {
         _qh: &QueueHandle<Self>,
         _output: wl_output::WlOutput,
     ) {
-        println!("Output destroyed: {:?}", _output);
     }
 }
 
@@ -190,14 +186,14 @@ impl WindowHandler for State {
     }
     fn configure(
         &mut self,
-        _conn: &Connection,
-        _qh: &QueueHandle<Self>,
+        conn: &Connection,
+        qh: &QueueHandle<Self>,
         window: &Window,
         configure: WindowConfigure,
         _serial: u32,
     ) {
         for viewer in &mut self.windows {
-            if viewer.window == *window {
+            if viewer.window != *window {
                 continue;
             }
             viewer.buffer = None;
@@ -207,6 +203,7 @@ impl WindowHandler for State {
 
             viewer.first_configure = false;
         }
+        self.draw(conn, qh);
     }
 }
 
