@@ -12,3 +12,7 @@ image = "0.25.6"
 smithay-client-toolkit = "0.19.2"
 wayland-client = "0.31.8"
 wayland-protocols-wlr = "0.3.6"
+winit = "=0.30.10"
+
+[patch.crates-io]
+winit = { path = "winit" }
