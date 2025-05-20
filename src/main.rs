@@ -1,46 +1,52 @@
-use eframe::egui;
-fn main() -> eframe::Result {
-    env_logger::init();
-    let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([800.0, 600.0]),
-        ..Default::default()
-    };
-    eframe::run_native(
-        "agreeter",
-        options,
-        Box::new(|cc| {
-            egui_extras::install_image_loaders(&cc.egui_ctx);
-            Ok(Box::<AGreeter>::default())
-        }),
-    )
+use clap::Parser;
+use zbus::Connection;
+mod user;
+mod accounts;
+use crate::user::UserProxy;
+use crate::accounts::AccountsProxy;
+
+#[derive(Parser)]
+#[command(name = "agreeter")]
+#[command(about = "Yet another greetd greeter", long_about = None)]
+struct Cli {
+    /// List all cached users
+    #[arg(short, long)]
+    list_users: bool,
 }
 
-struct AGreeter {
-    name: String,
-    greeting: String,
-}
+async fn list_users(connection: &Connection) -> Result<(), Box<dyn std::error::Error>> {
+    let proxy = AccountsProxy::new(connection).await?;
 
-impl Default for AGreeter {
-    fn default() -> Self {
-        Self {
-            name: "AGreeter".to_owned(),
-            greeting: "Hello, World!".to_owned(),
+    match proxy.list_cached_users().await {
+        Ok(users) => {
+            if users.is_empty() {
+                println!("No cached users found.");
+            } else {
+                for path in users {
+                    let user = UserProxy::builder(connection)
+                        .path(path)?
+                        .build()
+                        .await?;
+                    println!("{}", user.user_name().await?);
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("Failed to list users: {}", e);
+            return Err(Box::new(e));
         }
     }
+    Ok(())
 }
 
-impl eframe::App for AGreeter {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.label("Enter your name:");
-            ui.image(egui::include_image!(
-                "/home/astrea/Pictures/Avatars/Caption.jpg"
-            ));
-            ui.text_edit_singleline(&mut self.name);
-            if ui.button("Greet").clicked() {
-                self.greeting = format!("Hello, {}!", self.name);
-            }
-            ui.label(&self.greeting);
-        });
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let cli = Cli::parse();
+    let connection = Connection::system().await?;
+
+    if cli.list_users {
+        list_users(&connection).await?;
     }
+
+    Ok(())
 }
