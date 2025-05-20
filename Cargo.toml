@@ -4,15 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-eframe = "0.31.1"
-egui = "0.31.1"
-egui_extras = { version = "0.31.1", features = ["all_loaders"] }
 env_logger = "0.11.8"
-image = "0.25.6"
-smithay-client-toolkit = "0.19.2"
+greetd_ipc = "0.10.3"
+rpassword = "7.4.0"
 wayland-client = "0.31.8"
 wayland-protocols-wlr = "0.3.6"
-winit = "=0.30.10"
-
-[patch.crates-io]
-winit = { path = "winit" }
